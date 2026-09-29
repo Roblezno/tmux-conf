@@ -1,1 +1,4 @@
 plugins/
+
+/.quarto/
+**/*.quarto_ipynb

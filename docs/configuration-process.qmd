@@ -1,0 +1,354 @@
+---
+title: "Tmux Configuration Process"
+subtitle: "Analysis, repository repair, installation, and validation"
+author: "Roblezno"
+date: "2026-09-29"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    theme: cosmo
+execute:
+  enabled: false
+---
+
+## Purpose
+
+This report records how the tmux configuration was reconstructed on a new
+system and how the GitHub repository was made portable. Its purpose is to make
+future installation, maintenance, and troubleshooting repeatable.
+
+The target design uses [Oh My Tmux](https://github.com/gpakosz/.tmux) as the
+base configuration, keeps personal options in `tmux.conf.local`, and lets Oh My
+Tmux's built-in TPM integration manage
+[tmux-menus](https://github.com/jaclu/tmux-menus).
+
+## Initial system analysis
+
+The system was inspected before modifying files. The relevant environment was:
+
+| Component | Observed value |
+| --- | --- |
+| Operating system | CachyOS/Arch Linux derivative |
+| tmux | 3.7c, installed through pacman |
+| Login shell | fish |
+| Terminal | Alacritty 0.17.0 |
+| Outer `$TERM` | `xterm-256color` |
+| Colour support | `COLORTERM=truecolor` |
+| Display session | Wayland |
+| Clipboard command | `/usr/bin/wl-copy` |
+| tmux terminfo | `tmux-256color` available |
+| UTF-8 locale | `en_GB.UTF-8` |
+| Required commands | `awk`, `perl`, `grep`, `sed`, `git`, and `curl` present |
+| Fonts | Noto Mono, Nerd Fonts, and Powerline symbols available |
+
+No user tmux configuration, system `/etc/tmux.conf`, or running tmux server was
+present. The installed package contained the tmux binary, manual, and licence,
+but no distribution-specific configuration that needed to be preserved.
+
+## What the original repository revealed
+
+The original repository contained three important clues about the old setup:
+
+1. `tmux.conf` was an absolute symlink to
+   `/home/roblezno/oh-my-tmux/.tmux.conf`.
+2. The TPM log referred to plugins under
+   `/home/roblezno/.config/tmux/plugins`.
+3. `tmux.conf.local` enabled `jaclu/tmux-menus` through Oh My Tmux's TPM
+   integration.
+
+This established the previous layout:
+
+```text
+~/oh-my-tmux/.tmux.conf
+        ^
+        |
+~/.config/tmux/tmux.conf
+
+~/.config/tmux/tmux.conf.local
+~/.config/tmux/plugins/
+```
+
+### Repository defects
+
+A fresh clone could not completely reproduce that layout:
+
+- The absolute symlink only worked for the same username and directory.
+- `plugins/tpm` and `plugins/tmux-menus` were recorded as gitlinks.
+- No `.gitmodules` file provided URLs for those gitlinks.
+- The generated `plugins/tpm_log.txt` file was committed.
+- A normal clone therefore produced empty plugin directories which could stop
+  Oh My Tmux from installing TPM correctly.
+
+## Implemented repository architecture
+
+Oh My Tmux was converted into a real, pinned Git submodule and the runtime
+plugin directory was removed from version control:
+
+```text
+~/.config/tmux/
+├── .git/
+├── .gitignore
+├── .gitmodules
+├── README.md
+├── docs/
+│   └── configuration-process.qmd
+├── oh-my-tmux/                 # Git submodule
+├── plugins/                    # generated and ignored
+├── tmux.conf -> oh-my-tmux/.tmux.conf
+└── tmux.conf.local
+```
+
+The relative symlink makes the repository independent of the account's home
+directory. Pinning Oh My Tmux as a submodule also makes upgrades explicit and
+reproducible.
+
+## Configuration process
+
+### 1. Clone the personal repository
+
+```sh
+mkdir -p ~/.config
+git clone https://github.com/Roblezno/tmux-conf.git ~/.config/tmux
+cd ~/.config/tmux
+```
+
+### 2. Remove generated plugin state from Git
+
+The broken gitlinks and historical TPM log were removed:
+
+```sh
+git rm -r plugins
+printf 'plugins/\n' > .gitignore
+```
+
+TPM is responsible for recreating this directory at runtime.
+
+### 3. Add Oh My Tmux as a real submodule
+
+```sh
+git submodule add https://github.com/gpakosz/.tmux.git oh-my-tmux
+ln -sfn oh-my-tmux/.tmux.conf tmux.conf
+```
+
+The submodule was pinned at commit:
+
+```text
+58a3dcc0d718ec0fa1c0d5a2fddd640a1ad7a5b7
+```
+
+### 4. Enable clipboard integration
+
+The system already had a Wayland session and `wl-copy`, so the local setting
+was changed to:
+
+```tmux
+tmux_conf_copy_to_os_clipboard=true
+```
+
+Oh My Tmux then rewrites applicable copy-mode bindings to use `wl-copy`. For
+example, the vi copy-mode `y` binding resolves to:
+
+```text
+send-keys -X copy-pipe-and-cancel wl-copy
+```
+
+### 5. Enable mouse mode by default
+
+The local customization now contains:
+
+```tmux
+set -g mouse on
+```
+
+Mouse mode can still be toggled for the current server with `<prefix> m`.
+
+### 6. Set the preferred editor
+
+Fish universal exported variables were configured so `<prefix> e` opens
+Neovim:
+
+```fish
+set -Ux EDITOR nvim
+set -Ux VISUAL nvim
+```
+
+These variables are machine-specific and are not stored in this Git
+repository. They must be set separately on each device.
+
+### 7. First launch and plugin installation
+
+Oh My Tmux found `set -g @plugin 'jaclu/tmux-menus'` in
+`tmux.conf.local`. On first launch it created
+`~/.config/tmux/plugins`, cloned TPM, and installed tmux-menus.
+
+The same operation can be triggered manually from tmux with `<prefix> I`.
+
+## Validation
+
+The configuration was started on an isolated tmux socket so it could be tested
+without affecting normal sessions:
+
+```sh
+tmux -L config-test \
+  -f ~/.config/tmux/tmux.conf \
+  new-session -d -s config-test
+```
+
+The following results were confirmed:
+
+| Check | Result |
+| --- | --- |
+| Main config path | `~/.config/tmux/tmux.conf` |
+| Plugin path | `~/.config/tmux/plugins` |
+| Inner terminal type | `tmux-256color` |
+| Primary prefix | `Ctrl-b` |
+| Secondary prefix | `Ctrl-a` |
+| Kanagawa status style | Loaded |
+| TPM executable | Installed |
+| tmux-menus | Installed and bound to `<prefix> \` |
+| Clipboard copy | Bound to `wl-copy` |
+| Mouse option | `on` |
+| Editor variables | `EDITOR=nvim`, `VISUAL=nvim` |
+
+The test server was stopped afterwards:
+
+```sh
+tmux -L config-test kill-server
+```
+
+A separate `git clone --recurse-submodules` test confirmed that the relative
+symlink resolves and the pinned Oh My Tmux revision is checked out on a clean
+machine.
+
+## Installing on another device
+
+### Arch Linux or derivative
+
+```sh
+sudo pacman -S tmux git wl-clipboard neovim
+git clone --recurse-submodules \
+  https://github.com/Roblezno/tmux-conf.git \
+  ~/.config/tmux
+tmux
+```
+
+For fish, restore the editor preference:
+
+```fish
+set -Ux EDITOR nvim
+set -Ux VISUAL nvim
+```
+
+For an X11 session, install `xclip` or `xsel` instead of `wl-clipboard`. On
+macOS, Oh My Tmux detects `pbcopy`.
+
+### Existing clone missing the submodule
+
+```sh
+git -C ~/.config/tmux submodule update --init --recursive
+```
+
+### Existing tmux configuration
+
+Before cloning, move any existing configuration to a backup location:
+
+```sh
+mv ~/.config/tmux ~/.config/tmux.backup
+```
+
+Also check for `~/.tmux.conf`, because tmux searches it before the XDG config.
+If present, back it up or remove it after verifying it is no longer needed.
+
+## Maintenance
+
+### Change personal options
+
+Only edit `tmux.conf.local`:
+
+```sh
+nvim ~/.config/tmux/tmux.conf.local
+```
+
+Reload from inside tmux with `<prefix> r`.
+
+### Pull repository changes
+
+```sh
+git -C ~/.config/tmux pull --ff-only
+git -C ~/.config/tmux submodule update --init --recursive
+```
+
+### Update the Oh My Tmux pin
+
+```sh
+git -C ~/.config/tmux/oh-my-tmux pull --ff-only
+git -C ~/.config/tmux add oh-my-tmux
+git -C ~/.config/tmux commit -m "chore: update Oh My Tmux"
+```
+
+### Manage TPM plugins
+
+- `<prefix> I`: install missing plugins
+- `<prefix> u`: update plugins
+- `<prefix> Alt-u`: remove plugins no longer configured
+
+The `plugins/` directory should remain ignored and must not be committed.
+
+## Troubleshooting
+
+### Confirm the config is discoverable
+
+```sh
+readlink -f ~/.config/tmux/tmux.conf
+git -C ~/.config/tmux submodule status
+```
+
+From inside tmux:
+
+```sh
+tmux show-environment -g TMUX_CONF
+tmux show-environment -g TMUX_PLUGIN_MANAGER_PATH
+tmux show-messages
+```
+
+### Compare against an empty configuration
+
+```sh
+tmux -L clean-test -f /dev/null
+```
+
+If the issue is absent there, it is caused by user configuration or a plugin.
+
+### Configuration does not reload
+
+Use `<prefix> r`. If the tmux binary was upgraded while a server was running,
+save work and restart all sessions:
+
+```sh
+tmux kill-server
+tmux
+```
+
+### tmux-menus on tmux 3.7c
+
+The plugin documents a tmux 3.7c bug where the left arrow cannot return to the
+previous menu. Select the Back item and press Enter. The issue is fixed in tmux
+3.8.
+
+## Local Git history
+
+The work was organized into commits covering the reproducible repository
+layout, clipboard integration, default mouse mode, and documentation. Review
+them with:
+
+```sh
+git -C ~/.config/tmux log --oneline --decorate
+```
+
+Publishing requires GitHub authentication and can be done with:
+
+```sh
+git -C ~/.config/tmux push origin main
+```
