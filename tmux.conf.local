@@ -429,6 +429,10 @@ bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?
 # move status line to top
 #set -g status-position top
 
+# For Nvim conf to draw images when tmux is enabled (prevents conflicts with windows/panes)
+set -gq allow-passthrough on
+set -g visual-activity off
+set-option -g focus-events on
 
 # -- tpm -----------------------------------------------------------------------
 
