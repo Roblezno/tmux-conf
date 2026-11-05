@@ -1,14 +1,14 @@
 # Tmux config
 
 Personal tmux configuration based on [Oh My Tmux][oh-my-tmux], with a
-Kanagawa-inspired theme, sensible navigation bindings, Wayland clipboard
-integration, mouse support, and the [tmux-menus][tmux-menus] plugin.
+Solarized Osaka theme matching Neovim, sensible navigation bindings, Wayland
+clipboard integration, mouse support, and the [tmux-menus][tmux-menus] plugin.
 
 ## Features
 
 - Oh My Tmux tracked as a pinned Git submodule.
 - Portable XDG layout under `~/.config/tmux`.
-- Kanagawa Wave colour palette and status line.
+- Solarized Osaka (vivid) colour palette and status line.
 - `Ctrl-b` as the primary prefix and `Ctrl-a` as a secondary prefix.
 - Windows and panes numbered from 1.
 - New panes retain the current working directory.
@@ -125,8 +125,9 @@ tmux_conf_copy_to_os_clipboard=true
 set -g @plugin 'jaclu/tmux-menus'
 ```
 
-The colour variables near the top of `tmux.conf.local` define the Kanagawa
-theme. Powerline separators are available but currently disabled.
+The colour variables near the top of `tmux.conf.local` define the Solarized
+Osaka (vivid) theme, taken from solarized-osaka.nvim. Powerline separators are
+available but currently disabled.
 
 ## Updating
 
