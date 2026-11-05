@@ -85,24 +85,24 @@ tmux_conf_24b_colour=auto
 #   - tmux_conf_theme_synchronized
 tmux_conf_theme=enabled
 
-# Kanagawa Wave theme
-tmux_conf_theme_colour_1="#1f1f28"    # sumiInk0
-tmux_conf_theme_colour_2="#2a2a37"    # sumiInk1
-tmux_conf_theme_colour_3="#727169"    # fujiGray
-tmux_conf_theme_colour_4="#7e9cd8"    # crystalBlue
-tmux_conf_theme_colour_5="#e6c384"    # carpYellow
-tmux_conf_theme_colour_6="#1f1f28"    # sumiInk0
-tmux_conf_theme_colour_7="#dcd7ba"    # fujiWhite
-tmux_conf_theme_colour_8="#16161d"    # sumiInk3
-tmux_conf_theme_colour_9="#e6c384"    # carpYellow
-tmux_conf_theme_colour_10="#d27e99"   # sakuraPink
-tmux_conf_theme_colour_11="#98bb6c"   # springGreen
-tmux_conf_theme_colour_12="#727169"   # fujiGray
-tmux_conf_theme_colour_13="#dcd7ba"   # fujiWhite
-tmux_conf_theme_colour_14="#1f1f28"   # sumiInk0
-tmux_conf_theme_colour_15="#16161d"   # sumiInk3
-tmux_conf_theme_colour_16="#c34043"   # autumnRed
-tmux_conf_theme_colour_17="#dcd7ba"   # fujiWhite
+# Solarized Osaka theme (vivid style), matching nvim (solarized-osaka.nvim)
+tmux_conf_theme_colour_1="#001419"    # base04  status bar bg, dark text on pills
+tmux_conf_theme_colour_2="#063540"    # base02  pane borders, inactive window pills
+tmux_conf_theme_colour_3="#b6c5c6"    # base0   status and inactive window text
+tmux_conf_theme_colour_4="#dba500"    # yellow  current window, active border, clock
+tmux_conf_theme_colour_5="#5aaefa"    # blue    messages, copy/choose modes, bell
+tmux_conf_theme_colour_6="#001419"    # base04  session text
+tmux_conf_theme_colour_7="#b6c5c6"    # base0   uptime text
+tmux_conf_theme_colour_8="#001419"    # base04  (3rd left section, unused)
+tmux_conf_theme_colour_9="#5aaefa"    # blue    session pill, copy-mode border
+tmux_conf_theme_colour_10="#063540"   # base02  uptime pill
+tmux_conf_theme_colour_11="#a2bb00"   # green   (3rd left section, unused)
+tmux_conf_theme_colour_12="#b6c5c6"   # base0   indicators, time, date text
+tmux_conf_theme_colour_13="#001419"   # base04  username text
+tmux_conf_theme_colour_14="#001419"   # base04  hostname text
+tmux_conf_theme_colour_15="#001419"   # base04  time/date section bg
+tmux_conf_theme_colour_16="#ff6c6a"   # red     username pill, synchronized border
+tmux_conf_theme_colour_17="#34c5b9"   # cyan    hostname pill
 
 # default theme
 #tmux_conf_theme_colour_1="#080808"    # dark gray
@@ -213,7 +213,7 @@ tmux_conf_theme_terminal_title="#h ❐ #S ● #I #W"
 #     - #{username}
 #     - #{username_ssh}
 tmux_conf_theme_window_status_fg="$tmux_conf_theme_colour_3"
-tmux_conf_theme_window_status_bg="$tmux_conf_theme_colour_1"
+tmux_conf_theme_window_status_bg="$tmux_conf_theme_colour_2"
 tmux_conf_theme_window_status_attr="none"
 tmux_conf_theme_window_status_format="#I #W#{?#{||:#{window_bell_flag},#{window_zoomed_flag}}, ,}#{?window_bell_flag,!,}#{?window_zoomed_flag,Z,}"
 #tmux_conf_theme_window_status_format="#{circled_window_index} #W#{?#{||:#{window_bell_flag},#{window_zoomed_flag}}, ,}#{?window_bell_flag,!,}#{?window_zoomed_flag,Z,}"
@@ -229,7 +229,7 @@ tmux_conf_theme_window_status_format="#I #W#{?#{||:#{window_bell_flag},#{window_
 #     - #{hostname_full_ssh}
 #     - #{username}
 #     - #{username_ssh}
-tmux_conf_theme_window_status_current_fg="$tmux_conf_theme_colour_1"
+tmux_conf_theme_window_status_current_fg="#ffffff"   # base4, as in nvim tabline
 tmux_conf_theme_window_status_current_bg="$tmux_conf_theme_colour_4"
 tmux_conf_theme_window_status_current_attr="bold"
 tmux_conf_theme_window_status_current_format="#I #W#{?#{||:#{window_bell_flag},#{window_zoomed_flag}}, ,}#{?window_bell_flag,!,}#{?window_zoomed_flag,Z,}"
