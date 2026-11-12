@@ -434,6 +434,14 @@ set -gq allow-passthrough on
 set -g visual-activity off
 set-option -g focus-events on
 
+# Extended keys `on` instead of Oh my tmux's `always` (same terminal test, see tmux.conf). With
+# `always`, Nvim's snacks.image asks the outer terminal for its version and tmux types the reply
+# into the pane (Ghostty: P pastes the clipboard, then `ostty <version>`). With `on`, snacks asks
+# tmux for the terminal name instead (snacks.nvim issue #2332)
+%if #{>=:#{s/^[^0-9]+//:#{version}},3.2}
+set -gF extended-keys '#{?#{||:#{m/ri:mintty|iTerm|WezTerm|ghostty,#{TERM_PROGRAM}},#{!=:#{XTERM_VERSION},}},on,off}'
+%endif
+
 # -- tpm -----------------------------------------------------------------------
 
 # while I don't use tpm myself, many people requested official support so here
